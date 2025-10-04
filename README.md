@@ -81,9 +81,8 @@ flowchart LR
 
 > [!warning]
 >
-> 所有软件的安装路径不要出现中文。除 CLion 外，其余软件安装路径不能出现中文、空格以及特殊符号。
+> 所有软件的安装路径不要出现中文。因为 CLion 是通过命令行的方式调用其他工具，所以如果路径中出现了中文、空格以及特殊符号，就会导致命令出错。
 >
-> 因为 CLion 是通过命令行的方式调用其他工具，所以如果路径中出现了中文、空格以及特殊符号，就会导致命令出错。
 
 在这里列出笔者所装软件的路径，以供读者参考：
 
@@ -105,6 +104,8 @@ flowchart LR
 ## 编译烧录
 
 ### 编译
+
+#### 配置工具链
 
 CLion 集成的是面向 `x86`/`x64` 体系架构的原生 Windows 编译器（如 MinGW 的 `gcc`/`g++` 或 MSVC），这类编译器主要用于生成运行在基于 `x86` 或 `x86_64` 架构的普通 Windows 应用程序。
 
@@ -145,9 +146,27 @@ CLion 集成的是面向 `x86`/`x64` 体系架构的原生 Windows 编译器（�
 >
 > 工具链配置中，最顶端的配置即为默认配置，笔者主要使用 CLion 开发 STM32 项目，所以将 STM32CubeCLT 配置放在了最顶端作为默认配置。
 
+#### 配置 CMake
+
+STM32CubeMX 在生成项目时，默认会生成一个 `CMakePresets.json`。这个文件是 CMake 的预设配置文件，其主要目的是为了在各种环境下（如命令行、CI/CD 流水线、Visual Studio、VS Code 等）提供一套统一、可重用、且无需手动干预的构建配置。
+
+简单来说，`CMakePresets.json` 文件将常用的 CMake 配置选项（如构建类型、生成器、工具链路径、环境变量等）预先定义好并命名。用户或自动化工具只需选择预设的名称（例如 `Debug`）即可调用整套配置，而无需在命令行中重新输入一长串复杂的函数。
+
+但是 CLion 默认并不会使用 `CMakePresets.json` 中定义的配置，而是会自己创建一个默认的、与自身工具链绑定的 `Debug` 配置，所以需要手动启用配置。
+
+具体步骤为选中后缀 `preset` 字样的配置，点击 `Enable profile` 后再应用设置即可，如下图所示：
+
+![CLion CMake Profile](./figures/clion_cmake_profile.png)
+
 #### 编译测试
 
 配置完成后，使用 CLion 打开演示例程 [`demo/103c8t6_led_blink`](./demo/103c8t6_led_blink) 进行编译，编译成功的输出如下所示：
+
+> [!warning]
+>
+> 强烈建议新手将 `demo/103c8t6_led_blink` 目录下的 `.idea` 配置文件夹删除，自己重新配置。笔者上传该配置文件只是为了在不同设备上进行协作而已。
+>
+> 一定要自己动手实践，记住 “眼睛回了不代表手会了”。
 
 ```shell
 ====================[ 构建 | 103c8t6_led_blink | Debug ]==========================
@@ -361,4 +380,8 @@ tree, and GDB will still find it.)
 + [What's New in CLion 2025.1](https://www.jetbrains.com/clion/whatsnew/)
 
 + [**ST-LINK on-board** Converting ST-LINK On-Board Into a J-Link](https://www.segger.com/products/debug-probes/j-link/models/other-j-links/st-link-on-board/)
+
++ [CLion presets](https://www.jetbrains.com/help/clion/cmake-presets.html#detect)
+
++ [Error with CMake in New Version 6.15.0](https://community.st.com/t5/stm32cubemx-mcus/error-with-cmake-in-new-version-6-15-0/td-p/820814)
 
