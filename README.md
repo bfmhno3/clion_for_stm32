@@ -184,6 +184,52 @@ Memory region         Used Size  Region Size  %age Used
 
 这里笔者为了方便读者阅读，省略了中间大段的编译信息。
 
+#### 常见编译问题
+
+##### CMake 编译器测试失败
+
+**问题现象：**
+
+在配置 CMake 时，可能会遇到类似以下的错误信息：
+
+```
+CMake Error at CMakeTestCCompiler.cmake:67 (message): 错误
+The C compiler
+"D:/ide/STM32CubeCLT_1.19.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc.exe"
+is not able to compile a simple test program.
+
+unrecognized option '--major-image-version'
+use the --help option for usage information
+```
+
+**问题原因：**
+
+这是由于 `gcc-arm-none-eabi.cmake` 工具链文件使用了已废弃的 CMake 变量（`CMAKE_C_LINK_FLAGS` 和 `CMAKE_CXX_LINK_FLAGS`）而不是现代的 `CMAKE_EXE_LINKER_FLAGS`。这会导致 CMake 在编译器检测阶段将链接器标志以错误的方式传递给链接器。
+
+**解决方案：**
+
+打开 `demo/103c8t6_led_blink/cmake/gcc-arm-none-eabi.cmake` 文件，将所有的 `CMAKE_C_LINK_FLAGS` 和 `CMAKE_CXX_LINK_FLAGS` 替换为 `CMAKE_EXE_LINKER_FLAGS`。具体来说，将以下代码：
+
+```cmake
+set(CMAKE_C_LINK_FLAGS "${TARGET_FLAGS}")
+set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -T \"${CMAKE_SOURCE_DIR}/STM32F103XX_FLASH.ld\"")
+# ... 其他设置
+set(CMAKE_CXX_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--start-group -lstdc++ -lsupc++ -Wl,--end-group")
+```
+
+替换为：
+
+```cmake
+set(CMAKE_EXE_LINKER_FLAGS "${TARGET_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T \"${CMAKE_SOURCE_DIR}/STM32F103XX_FLASH.ld\"")
+# ... 其他设置
+set(TOOLCHAIN_LINK_LIBRARIES "")
+```
+
+> [!note]
+>
+> 本仓库已经修复了这个问题。如果你是从最新版本克隆的，应该不会遇到这个错误。
+
 如果读者编译失败，欢迎提出 [Issue](https://github.com/bfmhno3/clion_for_stm32/issues)，笔者会及时跟进解决。
 
 ### 烧录
